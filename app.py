@@ -1,10 +1,8 @@
 import requests
 import pandas as pd
 import plotly.express as px
-import json
 from flask import Flask, render_template
 import datetime
-import topojson as tp
 import os
 
 app = Flask(__name__)
@@ -65,17 +63,12 @@ def crear_mapa_municipios(data):
     cantidad_establecimientos_por_municipio["codigo_mun"] = cantidad_establecimientos_por_municipio["codigo_mun"].astype(str).str.zfill(5)
     
     # Cargar el GeoJSON (asegúrate de tener el archivo en tu proyecto)
-    topojson_url = "https://raw.githubusercontent.com/JEsteban1999/GeoJson-Mapa-Municipios-Colombia/refs/heads/main/Colombia_departamentos_municipios_poblacion-topov2.json"
-    topojson = requests.get(topojson_url).json()
-    
-    # Convertir TopoJSON a GeoJSON
-    geojson_str = tp.Topology(topojson, object_name="MGN_ANM_MPIOS").to_geojson()
-    geojson = json.loads(geojson_str)
+    url_geojson_municipio = "https://raw.githubusercontent.com/JEsteban1999/GeoJson-Mapa-Municipios-Colombia/refs/heads/main/MGN_ANM_MPIOS%20(1).json"
     
     # Crear el mapa
     fig = px.choropleth_map(
         cantidad_establecimientos_por_municipio,
-        geojson=geojson,
+        geojson=url_geojson_municipio,
         featureidkey="properties.MPIO_CDPMP",
         locations='codigo_mun',
         color='cantidad_establecimientos',
@@ -198,4 +191,4 @@ def dashboard():
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=port)
