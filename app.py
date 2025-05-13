@@ -17,7 +17,6 @@ def obtener_datos():
 
 def crear_mapa_departamentos(data):
     # Procesamiento de datos
-    print(data.head(10))
     cantidad_establecimientos_por_departamento = data.groupby(['departamento', 'cod_dpto'])['razon_social_establecimiento'].count().reset_index()
     cantidad_establecimientos_por_departamento.columns = ['departamento', 'codigo_dpto', 'cantidad_establecimientos']
     cantidad_establecimientos_por_departamento.sort_values(by='cantidad_establecimientos', ascending=False, inplace=True)
