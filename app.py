@@ -65,11 +65,11 @@ def crear_mapa_municipios(data):
     cantidad_establecimientos_por_municipio["codigo_mun"] = cantidad_establecimientos_por_municipio["codigo_mun"].astype(str).str.zfill(5)
     
     # Cargar el GeoJSON (asegúrate de tener el archivo en tu proyecto)
-    with open('Colombia_departamentos_municipios_poblacion-topov2.json', encoding="UTF-8") as f:
-        geojson_data = json.load(f)
+    topojson_url = "https://raw.githubusercontent.com/JEsteban1999/GeoJson-Mapa-Municipios-Colombia/refs/heads/main/Colombia_departamentos_municipios_poblacion-topov2.json"
+    topojson = requests.get(topojson_url).json()
     
     # Convertir TopoJSON a GeoJSON
-    geojson_str = tp.Topology(geojson_data, object_name="MGN_ANM_MPIOS").to_geojson()
+    geojson_str = tp.Topology(topojson, object_name="MGN_ANM_MPIOS").to_geojson()
     geojson = json.loads(geojson_str)
     
     # Crear el mapa
