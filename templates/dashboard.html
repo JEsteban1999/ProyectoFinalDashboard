@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Establecimientos Colombia</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://kit.fontawesome.com/77c49831ae.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
+</head>
+
+<body>
+    <header>
+        <h1><i class="fa-solid fa-map-location-dot"></i> Análisis de Establecimientos en Colombia</h1>
+    </header>
+    <nav>
+        <a href="#resumen">Resumen</a>
+        <a href="#mapa-departamentos">Por Departamento</a>
+        <a href="#mapa-municipios">Por Municipio</a>
+        <a href="#top-municipios">Top Municipios</a>
+        <a href="#distribucion-tipos">Tipos</a>
+    </nav>
+    <main>
+        <section id="resumen">
+            <div class="card">
+                <h2>Resumen de datos</h2>
+                <p class="registros_parrafo">Total de establecimientos registrados: {{ total_registros }}</p>
+                <p>Datos obtenidos del portal de datos abiertos de Colombia</p>
+            </div>
+        </section>
+
+        <section id="mapa-departamentos">
+            <div class="card">
+                <h2>Establecimientos por Departamento</h2>
+                <div class="imagen" id="mapaDepartamentos"></div>
+                <p>Mapa que muestra la distribución de establecimientos por departamento en Colombia.</p>
+            </div>
+        </section>
+
+        <section id="mapa-municipios">
+            <div class="card">
+                <h2>Establecimientos por Municipio</h2>
+                <div class="imagen" id="mapaMunicipios"></div>
+                <p>Mapa detallado que muestra la distribución de establecimientos a nivel municipal en Colombia.</p>
+            </div>
+        </section>
+
+        <section id="top-municipios">
+            <div class="card">
+                <h2>Top 20 Municipios con más Establecimientos</h2>
+                <div class="imagen" id="graficoTopMunicipios"></div>
+                <p>Gráfico de barras que muestra los 20 municipios con mayor número de establecimientos registrados.</p>
+            </div>
+        </section>
+
+        <section id="distribucion-tipos">
+            <div class="card">
+                <h2>Distribución por Tipo de Establecimiento</h2>
+                <div class="imagen" id="graficoTipos"></div>
+                <p>Gráfico circular que muestra la distribución porcentual de establecimientos según su tipo.</p>
+            </div>
+        </section>
+
+    </main>
+    <footer>
+        <i class="fa-brands fa-github"></i>
+        <i class="fa-brands fa-linkedin"></i>
+        <i class="fa-solid fa-envelope"></i>
+        <a href="https://www.datos.gov.co/" target="_blank">Fuente de datos</a>
+        <span>Dashboard creado con Flask y Plotly | {{ now }}</span>
+    </footer>
+
+    <script>
+        // Mapa por departamento
+        var graphDepartamento = {{ graphJSON_departamento | safe }};
+        Plotly.newPlot('mapaDepartamentos', graphDepartamento.data, graphDepartamento.layout);
+
+        // Mapa por municipio
+        var graphMunicipios = {{ graphJSON_municipios | safe }};
+        Plotly.newPlot('mapaMunicipios', graphMunicipios.data, graphMunicipios.layout);
+
+        // Gráfico de top municipios
+        var graphTopMunicipios = {{ graphJSON_top_municipios | safe }};
+        Plotly.newPlot('graficoTopMunicipios', graphTopMunicipios.data, graphTopMunicipios.layout);
+
+        // Gráfico de tipos de establecimiento
+        var graphTipos = {{ graphJSON_tipos | safe }};
+        Plotly.newPlot('graficoTipos', graphTipos.data, graphTipos.layout);
+    </script>
+</body>
+
+</html>
