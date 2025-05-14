@@ -7,39 +7,26 @@ import os
 
 app = Flask(__name__)
 
+API_URL = "https://www.datos.gov.co/resource/thwd-ivmp.json"
+APP_TOKEN = "6drZ6YrTri9FeH1zhG3QdyHHk"
+HEADERS = {"X-App-Token": APP_TOKEN}
+
 
 def obtener_datos():
-    API_URL = "https://www.datos.gov.co/resource/thwd-ivmp.json"
-    APP_TOKEN = "6drZ6YrTri9FeH1zhG3QdyHHk"
-    LIMIT = 10000  # Máximo permitido por solicitud (ajusta según la API)
-    offset = 0
-    dataframes = []
-
-    headers = {"X-App-Token": APP_TOKEN}
-
-    while True:
-        # Usar parámetros SODA para paginación
-        params = {
-            "$limit": LIMIT,
-            "$offset": offset,
-            "$order": "departamento"  # Ordenar para consistencia
-        }
-        
-        response = requests.get(API_URL, headers=headers, params=params, timeout=60)
-        response.raise_for_status()  # Verificar errores HTTP
-        
-        data = response.json()
-        if not data:
-            break
-
-        df = pd.DataFrame(data)
-        dataframes.append(df)
-        offset += LIMIT
-
-        # Opcional: Mostrar progreso
-        print(f"Registros obtenidos: {offset}")
-
-    return pd.concat(dataframes, ignore_index=True)
+    print("Obteniendo datos desde la API...")
+    params = {
+        "$limit": 100000,
+        "$select": "mes, cod_mun, cod_dpto, razon_social_establecimiento, departamento, municipio, categoria, sub_categoria, habitaciones, camas, num_emp1",
+        "$where": "departamento IS NOT NULL"
+    }
+    
+    try:
+        response = requests.get(API_URL, headers=HEADERS, params=params, timeout=30)
+        response.raise_for_status()
+        return pd.DataFrame(response.json())
+    except Exception as e:
+        print(f"Error al obtener datos: {e}")
+        return pd.DataFrame()  # Retorna DataFrame vacío para evitar fallos
 
 
 def crear_mapa_departamentos(data):
