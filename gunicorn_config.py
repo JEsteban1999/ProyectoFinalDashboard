@@ -1,7 +1,7 @@
-import multiprocessing
-
-workers = multiprocessing.cpu_count() * 2 + 1
+workers = 2
 threads = 1
 timeout = 120
 bind = "0.0.0.0:10000"
 preload_app = True
+keepalive = 5
+worker_class = "gevent"
