@@ -9,22 +9,35 @@ app = Flask(__name__)
 
 
 def obtener_datos():
-    base_url = "https://www.datos.gov.co/resource/thwd-ivmp.json"
-    limit = 50000  # Puedes ajustar este valor
+    API_URL = "https://www.datos.gov.co/resource/thwd-ivmp.json"
+    APP_TOKEN = "6drZ6YrTri9FeH1zhG3QdyHHk"
+    LIMIT = 10000  # Máximo permitido por solicitud (ajusta según la API)
     offset = 0
     dataframes = []
 
-    while True:
-        url = f"{base_url}?$limit={limit}&$offset={offset}"
-        response = requests.get(url)
-        data = response.json()
+    headers = {"X-App-Token": APP_TOKEN}
 
+    while True:
+        # Usar parámetros SODA para paginación
+        params = {
+            "$limit": LIMIT,
+            "$offset": offset,
+            "$order": "departamento"  # Ordenar para consistencia
+        }
+        
+        response = requests.get(API_URL, headers=headers, params=params, timeout=60)
+        response.raise_for_status()  # Verificar errores HTTP
+        
+        data = response.json()
         if not data:
             break
 
         df = pd.DataFrame(data)
         dataframes.append(df)
-        offset += limit
+        offset += LIMIT
+
+        # Opcional: Mostrar progreso
+        print(f"Registros obtenidos: {offset}")
 
     return pd.concat(dataframes, ignore_index=True)
 
@@ -204,7 +217,6 @@ def crear_grafico_tipos(data):
         paper_bgcolor='rgba(0,0,0,0)',
         font=dict(color='#1a2e44', size=12),
         margin=dict(l=50, r=50, t=80, b=50),
-        padding=50,
         height=650,
         legend=dict(
             orientation="h",
