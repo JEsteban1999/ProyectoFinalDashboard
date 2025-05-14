@@ -7,19 +7,39 @@ import os
 
 app = Flask(__name__)
 
+
 def obtener_datos():
-    url = "https://www.datos.gov.co/resource/thwd-ivmp.json"
-    response = requests.get(url)
-    data = response.json()
-    return pd.DataFrame(data)
+    base_url = "https://www.datos.gov.co/resource/thwd-ivmp.json"
+    limit = 50000  # Puedes ajustar este valor
+    offset = 0
+    dataframes = []
+
+    while True:
+        url = f"{base_url}?$limit={limit}&$offset={offset}"
+        response = requests.get(url)
+        data = response.json()
+
+        if not data:
+            break
+
+        df = pd.DataFrame(data)
+        dataframes.append(df)
+        offset += limit
+
+    return pd.concat(dataframes, ignore_index=True)
+
 
 def crear_mapa_departamentos(data):
     # Procesamiento de datos
-    cantidad_establecimientos_por_departamento = data.groupby(['departamento', 'cod_dpto'])['razon_social_establecimiento'].count().reset_index()
-    cantidad_establecimientos_por_departamento.columns = ['departamento', 'codigo_dpto', 'cantidad_establecimientos']
-    cantidad_establecimientos_por_departamento.sort_values(by='cantidad_establecimientos', ascending=False, inplace=True)
-    cantidad_establecimientos_por_departamento["codigo_dpto"] = cantidad_establecimientos_por_departamento["codigo_dpto"].astype(str).str.zfill(2)
-    
+    cantidad_establecimientos_por_departamento = data.groupby(
+        ['departamento', 'cod_dpto'])['razon_social_establecimiento'].count().reset_index()
+    cantidad_establecimientos_por_departamento.columns = [
+        'departamento', 'codigo_dpto', 'cantidad_establecimientos']
+    cantidad_establecimientos_por_departamento.sort_values(
+        by='cantidad_establecimientos', ascending=False, inplace=True)
+    cantidad_establecimientos_por_departamento["codigo_dpto"] = cantidad_establecimientos_por_departamento["codigo_dpto"].astype(
+        str).str.zfill(2)
+
     # Crear el mapa
     url_geojson_departamento = "https://gist.githubusercontent.com/john-guerra/43c7656821069d00dcbc/raw/3aadedf47badbdac823b00dbe259f6bc6d9e1899/colombia.geo.json"
     fig = px.choropleth_map(
@@ -37,34 +57,39 @@ def crear_mapa_departamentos(data):
         opacity=0.9,
         color_discrete_sequence=px.colors.qualitative.Plotly
     )
-    
+
     # Ajustar el layout
     fig.update_layout(
         margin={"r": 0, "t": 40, "l": 0, "b": 0},
         height=650,
         paper_bgcolor='rgba(34,34,34,1)',
         plot_bgcolor='rgba(34,34,34,1)',
-        font=dict(color='white'),  
+        font=dict(color='white'),
         coloraxis_colorbar=dict(
             title="Cantidad de establecimientos",
             tickfont=dict(color='white'),
         )
     )
-    
+
     fig.update_traces(marker_line_color='rgba(255, 255, 255, 0.7)')
-    
+
     return fig.to_json()
+
 
 def crear_mapa_municipios(data):
     # Procesamiento de datos
-    cantidad_establecimientos_por_municipio = data.groupby(['municipio', 'cod_mun'])['razon_social_establecimiento'].count().reset_index()
-    cantidad_establecimientos_por_municipio.columns = ['municipio', 'codigo_mun', 'cantidad_establecimientos']
-    cantidad_establecimientos_por_municipio.sort_values(by='cantidad_establecimientos', ascending=False, inplace=True)
-    cantidad_establecimientos_por_municipio["codigo_mun"] = cantidad_establecimientos_por_municipio["codigo_mun"].astype(str).str.zfill(5)
-    
+    cantidad_establecimientos_por_municipio = data.groupby(
+        ['municipio', 'cod_mun'])['razon_social_establecimiento'].count().reset_index()
+    cantidad_establecimientos_por_municipio.columns = [
+        'municipio', 'codigo_mun', 'cantidad_establecimientos']
+    cantidad_establecimientos_por_municipio.sort_values(
+        by='cantidad_establecimientos', ascending=False, inplace=True)
+    cantidad_establecimientos_por_municipio["codigo_mun"] = cantidad_establecimientos_por_municipio["codigo_mun"].astype(
+        str).str.zfill(5)
+
     # Cargar el GeoJSON (asegúrate de tener el archivo en tu proyecto)
     url_geojson_municipio = "https://raw.githubusercontent.com/JEsteban1999/GeoJson-Mapa-Municipios-Colombia/refs/heads/main/MGN_ANM_MPIOS%20(1).json"
-    
+
     # Crear el mapa
     fig = px.choropleth_map(
         cantidad_establecimientos_por_municipio,
@@ -81,33 +106,39 @@ def crear_mapa_municipios(data):
         opacity=0.8,
         color_discrete_sequence=px.colors.qualitative.Plotly
     )
-    
+
     # Ajustar el layout
     fig.update_layout(
         margin={"r": 0, "t": 40, "l": 0, "b": 0},
         height=650,
         paper_bgcolor='rgba(34,34,34,1)',
         plot_bgcolor='rgba(34,34,34,1)',
-        font=dict(color='white'),  
+        font=dict(color='white'),
         coloraxis_colorbar=dict(
             title="Cantidad de establecimientos",
             tickfont=dict(color='white'),
         )
     )
-    
+
     fig.update_traces(marker_line_color='rgba(255, 255, 255, 0.7)')
-    
+
     return fig.to_json()
+
 
 def crear_grafico_top_municipios(data):
     # Procesamiento de datos
-    cantidad_establecimientos_por_municipio = data.groupby(['municipio', 'cod_mun'])['razon_social_establecimiento'].count().reset_index()
-    cantidad_establecimientos_por_municipio.columns = ['municipio', 'codigo_mun', 'cantidad_establecimientos']
-    cantidad_establecimientos_por_municipio.sort_values(by='cantidad_establecimientos', ascending=False, inplace=True)
-    cantidad_establecimientos_por_municipio["codigo_mun"] = cantidad_establecimientos_por_municipio["codigo_mun"].astype(str).str.zfill(5)
-    
+    cantidad_establecimientos_por_municipio = data.groupby(
+        ['municipio', 'cod_mun'])['razon_social_establecimiento'].count().reset_index()
+    cantidad_establecimientos_por_municipio.columns = [
+        'municipio', 'codigo_mun', 'cantidad_establecimientos']
+    cantidad_establecimientos_por_municipio.sort_values(
+        by='cantidad_establecimientos', ascending=False, inplace=True)
+    cantidad_establecimientos_por_municipio["codigo_mun"] = cantidad_establecimientos_por_municipio["codigo_mun"].astype(
+        str).str.zfill(5)
+
     # Obtener solo los top 20 municipios para el gráfico de barras
-    top_municipios = cantidad_establecimientos_por_municipio.head(20).sort_values('cantidad_establecimientos', ascending=True)
+    top_municipios = cantidad_establecimientos_por_municipio.head(
+        20).sort_values('cantidad_establecimientos', ascending=True)
     # Crear gráfico de barras
     fig = px.bar(
         top_municipios,
@@ -116,9 +147,10 @@ def crear_grafico_top_municipios(data):
         orientation='h',
         color='cantidad_establecimientos',
         color_continuous_scale='Viridis',
-        labels={'cantidad_establecimientos': 'Cantidad de Establecimientos', 'municipio': 'Municipio'}
+        labels={'cantidad_establecimientos': 'Cantidad de Establecimientos',
+                'municipio': 'Municipio'}
     )
-    
+
     # Ajustar el layout
     fig.update_layout(
         plot_bgcolor='rgba(0,0,0,0)',
@@ -129,47 +161,84 @@ def crear_grafico_top_municipios(data):
         xaxis_title='Cantidad de Establecimientos',
         yaxis_title=''
     )
-    
+
     return fig.to_json()
+
 
 def crear_grafico_tipos(data):
     # Procesamiento de datos
     distribucion_tipos = data['sub_categoria'].value_counts().reset_index()
     distribucion_tipos.columns = ['tipo', 'cantidad']
-    
+
+    # Umbral para agrupar categorías pequeñas (ej. 1% del total)
+    threshold = 0.01 * distribucion_tipos['cantidad'].sum()
+
+    # Crear nueva columna con categorías agrupadas
+    distribucion_tipos['tipo_agrupado'] = distribucion_tipos.apply(
+        lambda x: x['tipo'] if x['cantidad'] >= threshold else 'Otros', axis=1
+    )
+
+    # Agrupar los datos
+    distribucion_agrupada = distribucion_tipos.groupby(
+        'tipo_agrupado')['cantidad'].sum().reset_index()
+
     # Crear gráfico de pastel
     fig = px.pie(
-        distribucion_tipos,
+        distribucion_agrupada,
         values='cantidad',
-        names='tipo',
+        names='tipo_agrupado',
         hole=0.3,
         color_discrete_sequence=px.colors.sequential.Viridis,
     )
-    
-    #Ajustar el layout
+
+    # Mejorar el layout y las etiquetas
+    fig.update_traces(
+        textposition='inside',
+        textinfo='percent+label',
+        insidetextorientation='radial',
+        pull=[0.1 if t == 'Otros' else 0 for t in distribucion_agrupada['tipo_agrupado']]
+    )
+
     fig.update_layout(
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#1a2e44'),
-        margin=dict(l=50, r=50, t=50, b=50),
+        font=dict(color='#1a2e44', size=12),
+        margin=dict(l=50, r=50, t=80, b=50),
+        padding=50,
         height=650,
-        
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.2,
+            xanchor="center",
+            x=0.5
+        ),
+        title={
+            'text': 'Distribución por Tipo de Establecimiento',
+            'y': 0.95,
+            'x': 0.5,
+            'xanchor': 'center',
+            'yanchor': 'top',
+            'font': {'size': 20}
+        }
     )
-    
+
     return fig.to_json()
+
 
 @app.route('/')
 def dashboard():
     try:
         # Obtener datos
         data = obtener_datos()
-        
+
         # Crear visualizaciones
         graphJSON_departamento = crear_mapa_departamentos(data)
-        graphJSON_municipios = crear_mapa_municipios(data)  # Esta es la nueva función
+        graphJSON_municipios = crear_mapa_municipios(
+            data)  # Esta es la nueva función
         graphJSON_top_municipios = crear_grafico_top_municipios(data)
         graphJSON_tipos = crear_grafico_tipos(data)
-        
+
         # Verificar que los JSON son válidos
         import json
         json.loads(graphJSON_departamento)
@@ -188,6 +257,7 @@ def dashboard():
         )
     except Exception as e:
         return f"Error al generar el dashboard: {str(e)}", 500
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
