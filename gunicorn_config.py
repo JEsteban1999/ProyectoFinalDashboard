@@ -4,4 +4,3 @@ timeout = 120
 bind = "0.0.0.0:10000"
 preload_app = True
 keepalive = 5
-worker_class = "gevent"
