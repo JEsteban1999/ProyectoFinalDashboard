@@ -11,22 +11,28 @@ app = Flask(__name__)
 def obtener_datos():
     API_URL = "https://www.datos.gov.co/resource/thwd-ivmp.json"
     APP_TOKEN = "6drZ6YrTri9FeH1zhG3QdyHHk"
-    LIMIT = 10000  # Máximo permitido por solicitud (ajusta según la API)
+    LIMIT = 10000
     offset = 0
     dataframes = []
-
+    
+    # Columnas que SI necesitas
+    columnas_necesarias = [
+        'mes', 'cod_mun', 'cod_dpto', 'razon_social_establecimiento', 'departamento', 'municipio', 'categoria', 'sub_categoria',
+        'habitaciones', 'camas', 'num_emp1' 
+    ]
+    
     headers = {"X-App-Token": APP_TOKEN}
 
     while True:
-        # Usar parámetros SODA para paginación
         params = {
             "$limit": LIMIT,
             "$offset": offset,
-            "$order": "departamento"  # Ordenar para consistencia
+            "$order": "departamento",
+            "$select": ",".join(columnas_necesarias)  # Solo solicita estas columnas
         }
         
         response = requests.get(API_URL, headers=headers, params=params, timeout=60)
-        response.raise_for_status()  # Verificar errores HTTP
+        response.raise_for_status()
         
         data = response.json()
         if not data:
@@ -35,14 +41,8 @@ def obtener_datos():
         df = pd.DataFrame(data)
         dataframes.append(df)
         offset += LIMIT
-
-        # Opcional: Mostrar progreso
         print(f"Registros obtenidos: {offset}")
     
-    # Eliminar columnas innecesarias
-    columnas_a_eliminar = ['ano', 'codigo_rnt', 'estado_rnt', 'num_emp1', 'correo_establecimiento']
-    df.drop(columns=columnas_a_eliminar, inplace=True, errors='ignore')
-
     return pd.concat(dataframes, ignore_index=True)
 
 
@@ -220,23 +220,15 @@ def crear_grafico_tipos(data):
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
         font=dict(color='#1a2e44', size=12),
-        margin=dict(l=50, r=50, t=80, b=50),
+        margin=dict(l=50, r=50, t=50, b=50),
         height=650,
         legend=dict(
             orientation="h",
             yanchor="bottom",
-            y=-0.2,
+            y=-0.4,
             xanchor="center",
             x=0.5
-        ),
-        title={
-            'text': 'Distribución por Tipo de Establecimiento',
-            'y': 0.95,
-            'x': 0.5,
-            'xanchor': 'center',
-            'yanchor': 'top',
-            'font': {'size': 20}
-        }
+        )
     )
 
     return fig.to_json()
@@ -247,7 +239,7 @@ def dashboard():
     try:
         # Obtener datos
         data = obtener_datos()
-
+        print(data.head(10))
         # Crear visualizaciones
         graphJSON_departamento = crear_mapa_departamentos(data)
         graphJSON_municipios = crear_mapa_municipios(
