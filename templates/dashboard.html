@@ -20,6 +20,8 @@
         <a href="#mapa-municipios">Por Municipio</a>
         <a href="#top-municipios">Top Municipios</a>
         <a href="#distribucion-tipos">Tipos</a>
+        <a href="#extranjeros">Extranjeros</a>
+        <a href="#turismo">Turismo</a>
     </nav>
     <main>
         <section id="resumen">
@@ -61,6 +63,39 @@
                 <p>Gráfico circular que muestra la distribución porcentual de establecimientos según su tipo.</p>
             </div>
         </section>
+        
+        <section id="extranjeros">
+            <div class="card">
+                <h2>Extranjeros no residentes en Colombia</h2>
+                <p class="registros_parrafo">Total de extranjeros no residentes registrados: {{ total_extranjeros }}</p>
+
+                <div class="card">
+                    <h3>Distribución por país de origen</h3>
+                    <div class="imagen" id="mapaExtranjeros"></div>
+                    <p>Mapa mundial que muestra la distribución de extranjeros no residentes por país de origen.</p>
+                </div>
+
+                <div class="card">
+                    <h3>Top 15 países con más extranjeros</h3>
+                    <div class="imagen" id="graficoTopPaises"></div>
+                    <p>Gráfico de barras que muestra los 15 países con mayor número de extranjeros no residentes en
+                        Colombia.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Nueva sección de Turismo -->
+        <section id="turismo">
+            <div class="card">
+                <h2>Turismo en Colombia 2025</h2>
+                <div class="imagen">
+                    <iframe title="Turismo en Colombia 2025" width="100%" height="541.25" 
+                            src="https://app.powerbi.com/reportEmbed?reportId=894196f1-8c17-4cd2-b19a-44175de1ced4&autoAuth=true&ctid=2bac32fd-d9a2-40d9-a272-3a35920f5607" 
+                            frameborder="0" allowFullScreen="true"></iframe>
+                </div>
+                <p>Dashboard de Power BI que muestra estadísticas de turismo en Colombia para el año 2025.</p>
+            </div>
+        </section>
 
     </main>
     <footer>
@@ -87,6 +122,14 @@
         // Gráfico de tipos de establecimiento
         var graphTipos = {{ graphJSON_tipos | safe }};
         Plotly.newPlot('graficoTipos', graphTipos.data, graphTipos.layout);
+
+        // Mapa de extranjeros
+        var graphExtranjeros = {{ graphJSON_mapa_extranjeros | safe }};
+        Plotly.newPlot('mapaExtranjeros', graphExtranjeros.data, graphExtranjeros.layout);
+
+        // Gráfico de top países
+        var graphTopPaises = {{ graphJSON_top_paises | safe }};
+        Plotly.newPlot('graficoTopPaises', graphTopPaises.data, graphTopPaises.layout);
     </script>
 </body>
 
