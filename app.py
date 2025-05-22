@@ -145,31 +145,33 @@ traducciones = {
     }
 }
 
-
 def obtener_codigo_pais(nombre_pais):
     # Primero aplicar correcciones específicas
     nombre_limpio = nombre_pais.strip().lower()
 
     try:
         # Buscar en nuestras traducciones inversas
-        codigo = next(
+        codigo_alpha3 = next(
             code for code, name in traducciones['es'].items()
             if name.lower() == nombre_limpio
         )
-        return codigo
+        # Obtener el código numérico usando pycountry
+        pais = pycountry.countries.get(alpha_3=codigo_alpha3)
+        return codigo_alpha3, pais.numeric if hasattr(pais, 'numeric') else None
     except StopIteration:
         # Si no está en nuestro diccionario, intentar con pycountry
         try:
-            pais = pycountry.countries.search_fuzzy(nombre_limpio)
-            return pais[0].alpha_3
+            pais = pycountry.countries.search_fuzzy(nombre_limpio)[0]
+            return pais.alpha_3, pais.numeric if hasattr(pais, 'numeric') else None
         except:
             # Como último recurso, intentar con pycountry-convert
             try:
                 alpha2 = country_name_to_country_alpha2(nombre_limpio)
-                return pycountry.countries.get(alpha_2=alpha2).alpha_3
+                pais = pycountry.countries.get(alpha_2=alpha2)
+                return pais.alpha_3, pais.numeric if hasattr(pais, 'numeric') else None
             except:
                 print(f"No se pudo encontrar código para: {nombre_pais}")
-                return None
+                return None, None
 
 
 def obtener_datos_establecimientos():
@@ -214,7 +216,7 @@ def obtener_datos_establecimientos():
 
 def obtener_datos_extranjeros():
     API_URL = "https://www.datos.gov.co/resource/7wm8-w5ad.json"
-    APP_TOKEN = "TcCv2IlEtCLd3emS8QABwNVTb"  # Usando el mismo token
+    APP_TOKEN = "TcCv2IlEtCLd3emS8QABwNVTb"
     LIMIT = 10000
     offset = 0
     dataframes = []
@@ -259,17 +261,20 @@ def obtener_datos_extranjeros():
             df_extranjeros['cant_extranjeros_no_residentes'], errors='coerce').fillna(0)
 
         # Obtener códigos ISO para los países
-        df_extranjeros['codigo_pais'] = df_extranjeros['paisoeeresidencia'].apply(
-            obtener_codigo_pais)
+        df_extranjeros[['codigo_pais_alpha3', 'codigo_pais_numerico']] = df_extranjeros['paisoeeresidencia'].apply(
+            lambda x: pd.Series(obtener_codigo_pais(x)))
         
         # Verificar países sin código para diagnóstico
-        paises_sin_codigo = df_extranjeros[df_extranjeros['codigo_pais'].isna()]['paisoeeresidencia'].unique()
+        paises_sin_codigo = df_extranjeros[df_extranjeros['codigo_pais_alpha3'].isna()]['paisoeeresidencia'].unique()
         if len(paises_sin_codigo) > 0:
             print("Países sin código encontrados:", paises_sin_codigo)
         
+        # Guardar dataframe de extranjeros en CSV con ambos códigos
+        df_extranjeros.to_csv('data_extranjeros.csv', index=False)
+        
         return df_extranjeros
     else:
-        return pd.DataFrame(columns=columnas_necesarias + ['codigo_pais'])
+        return pd.DataFrame(columns=columnas_necesarias + ['codigo_pais_alpha3', 'codigo_pais_numerico'])
 
 
 def crear_mapa_extranjeros(data):
@@ -288,16 +293,16 @@ def crear_mapa_extranjeros(data):
         geojson_data = json.load(f)
     
     # Agrupar por país de residencia
-    por_pais = data.groupby(['paisoeeresidencia', 'codigo_pais'])[
+    por_pais = data.groupby(['paisoeeresidencia', 'codigo_pais_alpha3'])[
         'cant_extranjeros_no_residentes'].sum().reset_index()
-    por_pais = por_pais[por_pais['codigo_pais'].notna()]
+    por_pais = por_pais[por_pais['codigo_pais_alpha3'].notna()]
 
     # Crear el mapa mundial
     fig = px.choropleth(
         por_pais,
         geojson=geojson_data,
         featureidkey="properties.iso_a3",
-        locations='codigo_pais',
+        locations='codigo_pais_alpha3',
         color='cant_extranjeros_no_residentes',
         hover_name='paisoeeresidencia',
         hover_data=['cant_extranjeros_no_residentes'],
