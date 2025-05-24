@@ -12,12 +12,30 @@ app = Flask(__name__)
 
 traducciones = {
     'es': {
-        'SPM': 'San Pedro y Miquelón',
+        'SHN': 'Santa Elena',
+        'SLB': 'Islas Salomón',
+        'TLS': 'Timor Oriental',
+        'PLW': 'Palaos',
+        'TJK': 'Tayikistán',
+        'MDV': 'Maldivas',
+        'WLF': 'Islas Wallis y Futuna',
+        'HMD': 'Islas Heard y Mcdonald',
+        'ATA': 'Antártida',
+        'CXR': 'Isla de Navidad',
+        'DJI': 'Yibuti',
+        'GRL': 'Groenlandia',
+        'FLK': 'Islas Malvinas',
+        'MHL': 'Islas Marshall',
+        'CCK': 'Islas Cocos',
+        'SJM': 'Islas Svalbard y Jan Mayen',
+        'BVT': 'Isla Bouvet',
+        'FRO': 'Islas Feroe',
+        'COK': 'Islas Cook',
+        'ATF': 'Terr. Australes Franceses',
+        'SPM': 'San Pedro y Miquelon',
         'BLM': 'San Bartolomé',
         'NCL': 'Nueva Caledonia',
         'PYF': 'Polinesia Francesa',
-        'WLF': 'Wallis y Futuna',
-        'ATF': 'Tierras Australes y Antárticas Francesas',
         'NER': 'Níger',
         'AZE': 'Azerbaiyán',
         'GRD': 'Granada',
@@ -47,11 +65,10 @@ traducciones = {
         'PSE': 'Palestina',
         'GBR': 'Reino Unido',
         'DOM': 'República Dominicana',
-        # Nuevas traducciones añadidas
         'AFG': 'Afganistán',
         'AIA': 'Anguila',
         'ATG': 'Antigua y Barbuda',
-        'ANT': 'Antillas Neerlandesas',  # Código obsoleto (ahora son BES, CUW, SXM)
+        'ANT': 'Antillas Neerlandesas',
         'SAU': 'Arabia Saudita',
         'DZA': 'Argelia',
         'AZE': 'Azerbaiyán',
@@ -59,7 +76,7 @@ traducciones = {
         'BLZ': 'Belice',
         'BMU': 'Bermudas',
         'BLR': 'Bielorrusia',
-        'BES': 'Bonaire-San Esustaquio y Saba',  # Mismo que Bonaire, San Eustaquio y Saba
+        'BES': 'Bonaire-San Esustaquio y Saba',
         'BWA': 'Botsuana',
         'KHM': 'Camboya',
         'CYP': 'Chipre',
@@ -109,7 +126,7 @@ traducciones = {
         'POL': 'Polonia',
         'CAF': 'República Centroafricana',
         'CZE': 'República Checa',
-        'XKX': 'República de Kosovo',  # Código no oficial (Kosovo no es miembro de la ONU)
+        'XKX': 'República de Kosovo',
         'MKD': 'República de Macedonia',
         'COD': 'República Democratica del Congo',
         'RWA': 'Ruanda',
@@ -140,8 +157,8 @@ traducciones = {
         'GNB': 'Guinea-Bisáu',
         'ASM': 'Samoa Americana',
         'STP': 'Santo Tomé y Principe',
-        'ATA': 'Terr. Británico en Antártida',
-        'XX1': 'Organismos internacionales',  # No es un código ISO real
+        'ATB': 'Terr. Británico en Antártida',
+        'XX1': 'Organismos internacionales',
     }
 }
 
@@ -180,15 +197,12 @@ def obtener_datos_establecimientos():
     LIMIT = 10000
     offset = 0
     dataframes = []
-
     # Columnas que SI necesitas
     columnas_necesarias = [
         'mes', 'cod_mun', 'cod_dpto', 'razon_social_establecimiento', 'departamento', 'municipio', 'categoria', 'sub_categoria',
         'habitaciones', 'camas', 'num_emp1'
     ]
-
     headers = {"X-App-Token": APP_TOKEN}
-
     while True:
         params = {
             "$limit": LIMIT,
@@ -197,15 +211,12 @@ def obtener_datos_establecimientos():
             # Solo solicita estas columnas
             "$select": ",".join(columnas_necesarias)
         }
-
         response = requests.get(API_URL, headers=headers,
                                 params=params, timeout=60)
         response.raise_for_status()
-
         data = response.json()
         if not data:
             break
-
         df = pd.DataFrame(data)
         dataframes.append(df)
         offset += LIMIT
@@ -220,13 +231,8 @@ def obtener_datos_extranjeros():
     LIMIT = 10000
     offset = 0
     dataframes = []
-
-    columnas_necesarias = [
-        'a_o', 'mes', 'departamento', 'ciudad', 'paisoeeresidencia', 'cant_extranjeros_no_residentes'
-    ]
-
+    columnas_necesarias = ['a_o', 'mes', 'departamento', 'ciudad', 'paisoeeresidencia', 'cant_extranjeros_no_residentes']
     headers = {"X-App-Token": APP_TOKEN}
-
     while True:
         params = {
             "$limit": LIMIT,
@@ -234,44 +240,34 @@ def obtener_datos_extranjeros():
             "$where": "a_o == 2025",
             "$select": ",".join(columnas_necesarias)
         }
-
         try:
             response = requests.get(
                 API_URL, headers=headers, params=params, timeout=30)
             response.raise_for_status()
-
             data = response.json()
             if not data:
                 break
-
             df = pd.DataFrame(data)
             dataframes.append(df)
             offset += LIMIT
             print(f"Registros de extranjeros obtenidos: {offset}")
-
         except Exception as e:
             print(f"Error al obtener datos: {str(e)}")
             break
-
     if dataframes:
         df_extranjeros = pd.concat(dataframes, ignore_index=True)
-
         # Convertir cantidad a numérico
         df_extranjeros['cant_extranjeros_no_residentes'] = pd.to_numeric(
             df_extranjeros['cant_extranjeros_no_residentes'], errors='coerce').fillna(0)
-
         # Obtener códigos ISO para los países
         df_extranjeros[['codigo_pais_alpha3', 'codigo_pais_numerico']] = df_extranjeros['paisoeeresidencia'].apply(
             lambda x: pd.Series(obtener_codigo_pais(x)))
-        
         # Verificar países sin código para diagnóstico
         paises_sin_codigo = df_extranjeros[df_extranjeros['codigo_pais_alpha3'].isna()]['paisoeeresidencia'].unique()
         if len(paises_sin_codigo) > 0:
             print("Países sin código encontrados:", paises_sin_codigo)
-        
         # Guardar dataframe de extranjeros en CSV con ambos códigos
         df_extranjeros.to_csv('data_extranjeros.csv', index=False)
-        
         return df_extranjeros
     else:
         return pd.DataFrame(columns=columnas_necesarias + ['codigo_pais_alpha3', 'codigo_pais_numerico'])
@@ -594,5 +590,4 @@ def dashboard():
 
 
 if __name__ == '__main__':
-    # port = int(os.environ.get("PORT", 10000))
     app.run(debug=True)
